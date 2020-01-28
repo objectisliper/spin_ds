@@ -7,7 +7,7 @@ python3 -m venv venv
 ```
 - Install requirements
 ```
-pip install --upgrade pip & pip install -r requirements.txt
+pip install --upgrade pip && pip install -r requirements.txt
 ```
 - Change settings if needed in app.settings
 - Start a project with command
