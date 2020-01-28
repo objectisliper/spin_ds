@@ -1,3 +1,5 @@
 /venv/
 /bokeh_example.html
 /.idea/
+/app/output.txt
+/app/output.csv

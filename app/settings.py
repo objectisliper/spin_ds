@@ -18,6 +18,6 @@ DISEASES_LIST = {'Chlamydia': 0.01355, 'Gonorrhea': 0.00365, 'HBV': 0.01, 'HCV':
                  'HSV-1': 0.478, 'HSV-2': 0.19615, 'Mycoplasma genitalium': 0.01, 'Public lice': 0.004,
                  'Scabies': 0.003, 'Syphilis': 0.00005121004, 'Trichomoniasis': 0.00510, 'Ureaplasma': 0.6}
 
-POPULATION = 300000
+POPULATION = 1000
 
 TIME_INTERVAL_DAYS = 3652
