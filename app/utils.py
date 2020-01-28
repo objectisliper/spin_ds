@@ -3,8 +3,11 @@ from random import randint
 import numpy as np
 
 # Bokeh libraries
-from bokeh.embed import file_html
+from bokeh.embed import file_html, autoload_static
 from bokeh.plotting import figure
+from bokeh.resources import INLINE
+
+from .settings import PORT, DOMAIN, PROTOCOL
 
 
 def get_figure():
@@ -35,7 +38,7 @@ def get_figure():
              legend_label='Daily')
 
     # The cumulative sum will be a trend line
-    fig.line(x=day_num, y=cumulative_words,
+    fig.line(x=day_num, y=[cumulative_word/1000 for cumulative_word in cumulative_words],
              color='gray', line_width=1,
              legend_label='Cumulative')
 
@@ -45,4 +48,10 @@ def get_figure():
     return fig
 
 
+def render_plot():
 
+    fig = get_figure()
+
+    js, tag = autoload_static(fig, INLINE, f"{PROTOCOL}://{DOMAIN}:{PORT}/plot.js")
+
+    return tag, js
