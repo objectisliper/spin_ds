@@ -1,5 +1,5 @@
-#SPIN DS
-##Start up a project
+# SPIN DS
+## Start up a project
 - Install all required packages to unix system (such as python3.7 and e.t.c.)
 - Make virtual environment
 ```
