@@ -6,21 +6,17 @@ import numpy as np
 from bokeh.embed import file_html, autoload_static
 from bokeh.plotting import figure
 from bokeh.resources import INLINE
+from numpy import loadtxt
 
 from .settings import PORT, DOMAIN, PROTOCOL
 
 
 def get_figure():
-    ITERATION_NUMBER = 3600
-    MIN_VALUE = 200
-    MAX_VALUE = 600
 
-    daily_words = []
-    # My word count data
-    for i in range(ITERATION_NUMBER):
-        daily_words.append(randint(MIN_VALUE, MAX_VALUE))
-    day_num = np.linspace(1, ITERATION_NUMBER, ITERATION_NUMBER)
-    cumulative_words = np.cumsum(daily_words)
+    daily_disease = loadtxt('app/output.csv', delimiter=',')
+
+    day_num = np.linspace(1, len(daily_disease), len(daily_disease))
+    cumulative_words = np.cumsum(daily_disease)
 
     # Output the visualization directly in the notebook
     # output_server('hover')
@@ -28,12 +24,12 @@ def get_figure():
     # Create a figure with a datetime type x-axis
     fig = figure(title='My Tutorial Progress',
                  plot_height=720, plot_width=1280,
-                 x_axis_label='Day Number', y_axis_label='Words Written',
-                 x_minor_ticks=2, y_range=(0, 6000), x_range=(0, 1200),
+                 x_axis_label='Day Number', y_axis_label='People with at least one disease',
+                 x_minor_ticks=2, y_range=(0, 2000), x_range=(0, 3600),
                  toolbar_location=None)
 
     # The daily words will be represented as vertical bars (columns)
-    fig.vbar(x=day_num, bottom=0, top=daily_words,
+    fig.vbar(x=day_num, bottom=0, top=daily_disease,
              color='blue', width=0.75,
              legend_label='Daily')
 
