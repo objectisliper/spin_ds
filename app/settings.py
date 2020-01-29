@@ -14,14 +14,26 @@ TORNADO_SETTINGS = {
     "serve_traceback": True,
 }
 
-DISEASES_LIST = {'Chlamydia': 0.01355, 'Gonorrhea': 0.00365, 'HBV': 0.01, 'HCV': 0.01, 'HIV': 0.0033,
-                 'HSV-2': 0.19615, 'Mycoplasma genitalium': 0.01, 'Public lice': 0.004,
-                 'Scabies': 0.003, 'Syphilis': 0.00005121004, 'Trichomoniasis': 0.00510}
+DISEASES_LIST = {'Chlamydia': 0.03, "HPV": 0.426,
+                 'HSV-2': 0.1205}
 
-POPULATION = 1000
+POPULATION = 2000
 
 TIME_INTERVAL_DAYS = 3652
 
+DISEASES_DETECT_LIST = {'Chlamydia': [], 'HSV-2': [], 'HPV': []}
+
+DISEASES_LUCK_LIST = {'Chlamydia': 0.63, 'HSV-2': 0.1, 'HPV': 0.08}
+
+DISEASES_LUCK_HEAL_LIST = {'Chlamydia': 0.6, 'HSV-2': 0, 'HPV': 0.25}
+
+VACCINATION = {'HPV': 0.3}
+
+SPIN_USERS = 0.2
+
+DOCTOR_CHECK_TIME_INTERVAL = 1100
+
 COLOR_BY_DISEASE = {
-    'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet'
+    'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet',
+    'HPV': 'orange'
 }
