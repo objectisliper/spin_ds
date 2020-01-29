@@ -21,3 +21,7 @@ DISEASES_LIST = {'Chlamydia': 0.01355, 'Gonorrhea': 0.00365, 'HBV': 0.01, 'HCV':
 POPULATION = 1000
 
 TIME_INTERVAL_DAYS = 3652
+
+COLOR_BY_DISEASE = {
+    'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet'
+}

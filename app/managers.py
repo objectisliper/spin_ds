@@ -1,3 +1,4 @@
+import json
 import time
 from random import randint, random
 from uuid import uuid4
@@ -50,20 +51,24 @@ class StandardPerson:
             self.diseases = []
 
 
-def save_output_to_file(results: list):
-    savetxt('output.csv', asarray(results), delimiter=',')
+def save_output_to_file(results: dict):
+    with open('output.json', 'w+') as f:
+        f.write(json.dumps(results))
 
 
-def simulate_simple_connections() -> list:
+def simulate_simple_connections() -> dict:
 
     persons = []
 
-    people_with_diseases_by_day = []
+    people_with_diseases_by_day = {'HIV': [], 'Chlamydia': [], 'HSV-2': [], 'Gonorrhea': [], 'HBV': []}
 
     for i in range(POPULATION):
         persons.append(StandardPerson(uuid4()))
 
-    people_with_diseases_by_day.append(len(list(filter(lambda person_to_check: len(person_to_check.diseases) > 0, persons))))
+    for disease in people_with_diseases_by_day:
+        people_with_diseases_by_day[disease].append(
+            len(list(filter(lambda person_to_check: disease in person_to_check.diseases, persons)))
+        )
 
     print(people_with_diseases_by_day)
 
@@ -88,7 +93,10 @@ def simulate_simple_connections() -> list:
         for person in persons:
             person.is_already_connected_today = False
 
-        people_with_diseases_by_day.append(len(list(filter(lambda person_to_check: len(person_to_check.diseases) > 0, persons))))
+        for disease in people_with_diseases_by_day:
+            people_with_diseases_by_day[disease].append(
+                len(list(filter(lambda person_to_check: disease in person_to_check.diseases, persons)))
+            )
 
         # print(people_with_diseases_by_day)
 
@@ -105,4 +113,3 @@ save_output_to_file(list_to_print)
 
 print("--- %s seconds ---" % (time.time() - start_time))
 
-print(list_to_print[0], list_to_print[-1])
