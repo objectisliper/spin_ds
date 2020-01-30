@@ -5,11 +5,12 @@ import numpy as np
 
 # Bokeh libraries
 from bokeh.embed import file_html, autoload_static
+from bokeh.models import Span
 from bokeh.plotting import figure
 from bokeh.resources import INLINE
 from numpy import loadtxt
 
-from .settings import PORT, DOMAIN, PROTOCOL, TIME_INTERVAL_DAYS, COLOR_BY_DISEASE
+from .settings import PORT, DOMAIN, PROTOCOL, TIME_INTERVAL_DAYS, COLOR_BY_DISEASE, USER_DAYS_DELAY_BEFORE_USE_SPIN
 
 
 def get_figure():
@@ -21,7 +22,7 @@ def get_figure():
     fig = figure(title='Diseases Progress',
                  plot_height=900, plot_width=1900,
                  x_axis_label='Day Number', y_axis_label='People with at least one disease',
-                 x_minor_ticks=2, y_range=(0, 100), x_range=(0, TIME_INTERVAL_DAYS),
+                 x_minor_ticks=2, y_range=(0, 100), x_range=(0, TIME_INTERVAL_DAYS), y_minor_ticks=5,
                  toolbar_location=None)
 
     # The cumulative sum will be a trend line
@@ -33,8 +34,11 @@ def get_figure():
                  legend_label=disease,
                  line_dash='dotted' if 'SPIN USER' in disease else 'dashed' if 'ALL POPULATION' in disease else 'solid')
 
+    vline = Span(location=USER_DAYS_DELAY_BEFORE_USE_SPIN, dimension='height', line_color='black', line_width=3)
     # Put the legend in the upper left corner
     fig.legend.location = 'top_left'
+
+    fig.renderers.extend([vline])
 
     return fig
 

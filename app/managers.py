@@ -8,7 +8,8 @@ import multiprocessing as mp
 from numpy import asarray, savetxt, loadtxt
 
 from app.settings import DISEASES_LIST, POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, DISEASES_LUCK_LIST, \
-    DOCTOR_CHECK_TIME_INTERVAL, DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY
+    DOCTOR_CHECK_TIME_INTERVAL, DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY, \
+    DISEASES_DAILY_LUCK_HEAL_LIST, USER_DAYS_DELAY_BEFORE_USE_SPIN, UNHEALABLE_DISEASES
 
 
 def decision(probability: float) -> bool:
@@ -19,12 +20,12 @@ class StandardPerson:
 
     def __init__(self, name: str):
         self.luck = randint(27, 500) / 10000
-        self.test_time_interval = randint(90, 1800)
-        self.last_test_was = randint(1, self.test_time_interval)
+        self.test_time_interval = randint(160, 1800)
+        self.last_test_was = randint(randint(1, randint(2, 30)), int(self.test_time_interval/randint(1, 3)))
         self.is_already_connected_today = bool(randint(0, 1))
         self.diseases = []
         self.is_notified = False
-        self.is_know_about_disease = False
+        self.known_diseases = []
         self.name = name
         self.__spin_partner_list = []
         self.is_spin_user = decision(SPIN_USERS)
@@ -42,17 +43,17 @@ class StandardPerson:
             if decision(VACCINATION[disease]):
                 self.__vaccination.append(disease)
 
-    def live_a_day(self, person_to_connect):
+    def live_a_day(self, person_to_connect, start_use_spin):
         if person_to_connect is not None:
-            person_to_connect.connect(self)
-            self.connect(person_to_connect)
+            person_to_connect.connect(self, start_use_spin)
+            self.connect(person_to_connect, start_use_spin)
         self.last_test_was -= 1
         self.check_is_need_go_to_doctor()
-        if self.is_know_about_disease:
+        if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
             self.__try_to_heal()
 
-    def connect(self, person_to_connect):
-        if self.is_spin_user and person_to_connect.is_spin_user:
+    def connect(self, person_to_connect, start_use_spin):
+        if start_use_spin and self.is_spin_user and person_to_connect.is_spin_user:
             self.__spin_partner_list.append(person_to_connect)
         for connect_disease in person_to_connect.diseases:
             if connect_disease in self.diseases:
@@ -81,21 +82,32 @@ class StandardPerson:
                 for partner in self.__spin_partner_list:
                     partner.notified(self)
                 self.__clear_spin_partner_list()
-            self.__try_to_heal()
-            if len(self.diseases) > 0:
-                self.is_know_about_disease = True
-            else:
-                self.is_know_about_disease = False
+            self.__try_to_heal(doctor=True)
 
     def __clear_spin_partner_list(self):
         self.__spin_partner_list = []
 
-    def __try_to_heal(self):
+    def __try_to_heal(self, doctor=False):
         for disease_index, disease in enumerate(self.diseases):
+            if doctor:
+                self.known_diseases.append(disease)
             if disease not in DISEASES_LUCK_HEAL_LIST:
                 self.diseases.pop(disease_index)
-            elif decision(DISEASES_LUCK_HEAL_LIST[disease]):
+            elif doctor and decision(DISEASES_LUCK_HEAL_LIST[disease]):
                 self.diseases.pop(disease_index)
+                if disease in self.known_diseases:
+                    self.known_diseases.pop(self.known_diseases.index(disease))
+            elif not doctor and decision(DISEASES_DAILY_LUCK_HEAL_LIST[disease]):
+                self.diseases.pop(disease_index)
+                if disease in self.known_diseases:
+                    self.known_diseases.pop(self.known_diseases.index(disease))
+
+    def __is_only_unhealable_known_diseases(self) -> bool:
+        unheal_diseases_number = 0
+        for disease in self.diseases:
+            if disease in UNHEALABLE_DISEASES:
+                unheal_diseases_number += 1
+        return len(self.diseases) == unheal_diseases_number
 
 
 def save_output_to_file(results: dict):
@@ -116,7 +128,7 @@ def simulate_simple_connections() -> dict:
         people_with_diseases_by_day[f'{disease} SPIN USER'] = []
         people_with_diseases_by_day[f'{disease} ALL POPULATION'] = []
 
-    get_disease_day_data(people_with_diseases_by_day, persons)
+    get_disease_day_data(people_with_diseases_by_day, persons, 0)
 
     print(people_with_diseases_by_day)
 
@@ -127,7 +139,7 @@ def simulate_simple_connections() -> dict:
 
         for person in persons:
             luck = person.luck
-            if person.is_know_about_disease:
+            if len(person.known_diseases) > 0:
                 luck = luck/2
             if not person.is_already_connected_today and decision(luck):
                 list_of_possible_people_to_connect = list(
@@ -139,13 +151,13 @@ def simulate_simple_connections() -> dict:
             else:
                 people_to_connect = None
 
-            person.live_a_day(people_to_connect)
+            person.live_a_day(people_to_connect, i > USER_DAYS_DELAY_BEFORE_USE_SPIN)
 
         for person in persons:
             person.is_already_connected_today = False
             person.is_notified = False
 
-        get_disease_day_data(people_with_diseases_by_day, persons)
+        get_disease_day_data(people_with_diseases_by_day, persons, i)
 
         persons.pop(randint(0, len(persons) - 1))
         persons.append(StandardPerson(uuid4()))
@@ -154,18 +166,21 @@ def simulate_simple_connections() -> dict:
     return people_with_diseases_by_day
 
 
-def get_disease_day_data(people_with_diseases_by_day, persons):
+def get_disease_day_data(people_with_diseases_by_day, persons, day):
     spin_users = list(filter(lambda person_to_check: person_to_check.is_spin_user, persons))
     simple_people = list(filter(lambda person_to_check: not person_to_check.is_spin_user, persons))
     for disease in people_with_diseases_by_day:
         if 'SPIN USER' in disease:
-            people_with_diseases_by_day[disease].append(
-                len(
-                    list(
-                        filter(lambda person_to_check: disease.replace(' SPIN USER', '') in person_to_check.diseases,
-                               spin_users)
-                    )
-                ) / len(spin_users) * 100)
+            if day > USER_DAYS_DELAY_BEFORE_USE_SPIN:
+                people_with_diseases_by_day[disease].append(
+                    len(
+                        list(
+                            filter(lambda person_to_check: disease.replace(' SPIN USER', '') in person_to_check.diseases,
+                                   spin_users)
+                        )
+                    ) / len(spin_users) * 100)
+            else:
+                people_with_diseases_by_day[disease].append(0)
         elif 'ALL POPULATION' in disease:
             people_with_diseases_by_day[disease].append(
                 len(list(
