@@ -33,6 +33,8 @@ SPIN_USERS = 0.2
 
 DOCTOR_CHECK_TIME_INTERVAL = 1100
 
+REACT_LUCKY = 0.9
+
 COLOR_BY_DISEASE = {
     'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet',
     'HPV': 'orange'
