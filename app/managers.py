@@ -68,7 +68,8 @@ class StandardPerson:
         if person_to_connect is not None:
             person_to_connect.connect(self, start_use_spin)
             self.connect(person_to_connect, start_use_spin)
-        self.__count_days_before_found()
+        if len(self.known_diseases) > 0:
+            self.__count_days_before_found()
         self.last_test_was -= 1
         self.check_is_need_go_to_doctor()
         if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
@@ -135,9 +136,10 @@ class StandardPerson:
 
 
 def save_output_to_file(results: dict):
-    # with open('output.json', 'w+') as f:
-    #     f.write(json.dumps(results))
-    pass
+    def remap_keys(mapping):
+        return [{f'{" ".join(k)}': v} for k, v in mapping.items()]
+    with open('output.json', 'w+') as f:
+        f.write(json.dumps(remap_keys(results)))
 
 
 def simulate_simple_connections() -> (dict, list, list):
@@ -196,10 +198,6 @@ def simulate_simple_connections() -> (dict, list, list):
 
     get_days_avg_before_find_disease_for_all(persons, simple_person_days_avg, spin_person_days_avg)
 
-    print('simple_person_array', simple_person_days_avg)
-
-    print('spin_person_array', spin_person_days_avg)
-
     calculate_avg(simple_person_days_avg)
 
     calculate_avg(spin_person_days_avg)
@@ -235,31 +233,25 @@ def simulate_population_change(persons, simple_days_avg, spin_days_avg):
 
 def get_disease_day_data(people_with_diseases_by_day, persons, day):
     spin_users = list(filter(lambda person_to_check: person_to_check.is_spin_user, persons))
-    simple_people = list(set(persons) - set(spin_users))
+    simple_peoples = list(set(persons) - set(spin_users))
     for disease, disease_group in people_with_diseases_by_day:
         if disease_group == 'SPIN USER':
             if day > USER_DAYS_DELAY_BEFORE_USE_SPIN:
                 people_with_diseases_by_day[disease, disease_group].append(
-                    len(
-                        list(
-                            filter(lambda person_to_check: disease in person_to_check.diseases,
-                                   spin_users)
-                        )
-                    ) / len(spin_users) * 100)
+                    len([spin_user.diseases for spin_user in spin_users if disease in spin_user.diseases]) / len(
+                        spin_users) * 100
+                )
             else:
                 people_with_diseases_by_day[disease, disease_group].append(0)
         elif disease_group == 'ALL POPULATION':
             people_with_diseases_by_day[disease, disease_group].append(
-                len(list(
-                    filter(lambda person_to_check: disease in person_to_check.diseases,
-                           persons)
-                )) / len(persons) * 100
+                len([person.diseases for person in persons if disease in person.diseases]) / len(
+                    persons) * 100
             )
         else:
             people_with_diseases_by_day[disease, disease_group].append(
-                len(list(
-                    filter(lambda person_to_check: disease in person_to_check.diseases, simple_people)
-                )) / len(simple_people) * 100
+                len([simple_people.diseases for simple_people in simple_peoples if disease in simple_people.diseases]) / len(
+                    simple_peoples) * 100
             )
 
 
@@ -267,11 +259,11 @@ start_time = time.time()
 
 list_to_print, simple_person_days_avg, spin_person_days_avg = simulate_simple_connections()
 
-# print(list_to_print)
-#
-# print('simple', simple_person_days_avg)
-#
-# print('spin', spin_person_days_avg)
+print(list_to_print)
+
+print('simple', simple_person_days_avg)
+
+print('spin', spin_person_days_avg)
 
 save_output_to_file(list_to_print)
 
