@@ -261,7 +261,6 @@ def get_disease_day_data(people_with_diseases_by_day, persons, day):
                     filter(lambda person_to_check: disease in person_to_check.diseases, simple_people)
                 )) / len(simple_people) * 100
             )
-            count()
 
 
 start_time = time.time()
