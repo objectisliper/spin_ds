@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from random import randint, random
+from statistics import mean
 from uuid import uuid4
 import multiprocessing as mp
 
@@ -9,7 +10,8 @@ from numpy import asarray, savetxt, loadtxt
 
 from app.settings import DISEASES_LIST, POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, DISEASES_LUCK_LIST, \
     DOCTOR_CHECK_TIME_INTERVAL, DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY, \
-    DISEASES_DAILY_LUCK_HEAL_LIST, USER_DAYS_DELAY_BEFORE_USE_SPIN, UNHEALABLE_DISEASES
+    DISEASES_DAILY_LUCK_HEAL_LIST, USER_DAYS_DELAY_BEFORE_USE_SPIN, UNHEALABLE_DISEASES, NEW_PEOPLE_DAY_LUCK, \
+    EXIT_PEOPLE_DAY_LUCK
 
 
 def decision(probability: float) -> bool:
@@ -31,6 +33,8 @@ class StandardPerson:
         self.is_spin_user = decision(SPIN_USERS)
         self.__vaccination = []
         self.__vaccination_try()
+        self.__days_before_found_disease = {}
+        self.__days_before_found_disease_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
         for disease in DISEASES_LIST:
             if len(self.diseases) > 14:
@@ -43,10 +47,28 @@ class StandardPerson:
             if decision(VACCINATION[disease]):
                 self.__vaccination.append(disease)
 
+    def get_days_before_found_disease_avg(self) -> (str, int):
+        output_days = copy.deepcopy(self.__days_before_found_disease_avg)
+        for key in output_days:
+            if len(output_days[key]) > 0:
+                yield key, mean(output_days[key])
+
+    def __count_days_before_found(self):
+        for disease in self.diseases:
+            if disease not in self.known_diseases:
+                if disease in self.__days_before_found_disease:
+                    self.__days_before_found_disease[disease] += 1
+                else:
+                    self.__days_before_found_disease[disease] = 0
+
+    def __clear_days_before_found(self, disease):
+        self.__days_before_found_disease_avg[disease].append(self.__days_before_found_disease.pop(disease, 0))
+
     def live_a_day(self, person_to_connect, start_use_spin):
         if person_to_connect is not None:
             person_to_connect.connect(self, start_use_spin)
             self.connect(person_to_connect, start_use_spin)
+        self.__count_days_before_found()
         self.last_test_was -= 1
         self.check_is_need_go_to_doctor()
         if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
@@ -90,7 +112,9 @@ class StandardPerson:
     def __try_to_heal(self, doctor=False):
         for disease_index, disease in enumerate(self.diseases):
             if doctor:
-                self.known_diseases.append(disease)
+                if disease not in self.known_diseases:
+                    self.known_diseases.append(disease)
+                    self.__clear_days_before_found(disease)
             if disease not in DISEASES_LUCK_HEAL_LIST:
                 self.diseases.pop(disease_index)
             elif doctor and decision(DISEASES_LUCK_HEAL_LIST[disease]):
@@ -104,10 +128,10 @@ class StandardPerson:
 
     def __is_only_unhealable_known_diseases(self) -> bool:
         unheal_diseases_number = 0
-        for disease in self.diseases:
+        for disease in self.known_diseases:
             if disease in UNHEALABLE_DISEASES:
                 unheal_diseases_number += 1
-        return len(self.diseases) == unheal_diseases_number
+        return len(self.known_diseases) == unheal_diseases_number
 
 
 def save_output_to_file(results: dict):
@@ -115,9 +139,13 @@ def save_output_to_file(results: dict):
         f.write(json.dumps(results))
 
 
-def simulate_simple_connections() -> dict:
+def simulate_simple_connections() -> (dict, list, list):
 
     persons = []
+
+    simple_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
+
+    spin_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
     people_with_diseases_by_day = copy.deepcopy(DISEASES_DETECT_LIST)
 
@@ -159,11 +187,46 @@ def simulate_simple_connections() -> dict:
 
         get_disease_day_data(people_with_diseases_by_day, persons, i)
 
-        persons.pop(randint(0, len(persons) - 1))
-        persons.append(StandardPerson(uuid4()))
+        simulate_population_change(persons, simple_person_days_avg, spin_person_days_avg)
         # print(people_with_diseases_by_day)
 
-    return people_with_diseases_by_day
+    get_days_avg_before_find_disease_for_all(persons, simple_person_days_avg, spin_person_days_avg)
+
+    print('simple_person_array', simple_person_days_avg)
+
+    print('spin_person_array', spin_person_days_avg)
+
+    calculate_avg(simple_person_days_avg)
+
+    calculate_avg(spin_person_days_avg)
+
+    return people_with_diseases_by_day, simple_person_days_avg, spin_person_days_avg
+
+
+def calculate_avg(days_avg):
+    for disease in days_avg:
+        days_avg[disease] = mean(days_avg[disease])
+
+
+def get_days_avg_before_find_disease_for_all(persons, simple_days_avg, spin_days_avg):
+    for person in persons:
+        get_days_avg_before_find_disease_for_one(person, simple_days_avg, spin_days_avg)
+
+
+def get_days_avg_before_find_disease_for_one(person, simple_days_avg, spin_days_avg):
+    for disease, value in person.get_days_before_found_disease_avg():
+        if person.is_spin_user:
+            spin_days_avg[disease].append(value)
+        else:
+            simple_days_avg[disease].append(value)
+
+
+def simulate_population_change(persons, simple_days_avg, spin_days_avg):
+    persons_len = len(persons)
+    for i in range(int(randint(*EXIT_PEOPLE_DAY_LUCK)/1000*persons_len)):
+        get_days_avg_before_find_disease_for_one(persons.pop(randint(0, len(persons) - 1)), simple_days_avg, spin_days_avg)
+    for i in range(int(randint(*NEW_PEOPLE_DAY_LUCK)/1000*persons_len)):
+        persons.append(StandardPerson(uuid4()))
 
 
 def get_disease_day_data(people_with_diseases_by_day, persons, day):
@@ -198,9 +261,13 @@ def get_disease_day_data(people_with_diseases_by_day, persons, day):
 
 start_time = time.time()
 
-list_to_print = simulate_simple_connections()
+list_to_print, simple_person_days_avg, spin_person_days_avg = simulate_simple_connections()
 
 print(list_to_print)
+
+print('simple', simple_person_days_avg)
+
+print('spin', spin_person_days_avg)
 
 save_output_to_file(list_to_print)
 

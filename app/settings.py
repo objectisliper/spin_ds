@@ -17,7 +17,7 @@ TORNADO_SETTINGS = {
 DISEASES_LIST = {'Chlamydia': 0.03, "HPV": 0.426,
                  'HSV-2': 0.1205}
 
-POPULATION = 1000
+POPULATION = 500
 
 TIME_INTERVAL_DAYS = 6000
 
@@ -40,6 +40,10 @@ SPIN_USERS = 0.1
 DOCTOR_CHECK_TIME_INTERVAL = 1100
 
 REACT_LUCKY = 0.9
+
+NEW_PEOPLE_DAY_LUCK = 1, 5
+
+EXIT_PEOPLE_DAY_LUCK = 1, 5
 
 COLOR_BY_DISEASE = {
     'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet',

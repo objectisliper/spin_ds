@@ -5,7 +5,7 @@ import numpy as np
 
 # Bokeh libraries
 from bokeh.embed import file_html, autoload_static
-from bokeh.models import Span
+from bokeh.models import Span, Scale, FixedTicker
 from bokeh.plotting import figure
 from bokeh.resources import INLINE
 from numpy import loadtxt
@@ -22,8 +22,11 @@ def get_figure():
     fig = figure(title='Diseases Progress',
                  plot_height=900, plot_width=1900,
                  x_axis_label='Day Number', y_axis_label='People with at least one disease',
-                 x_minor_ticks=2, y_range=(0, 100), x_range=(0, TIME_INTERVAL_DAYS), y_minor_ticks=5,
+                 x_minor_ticks=5, y_range=(0, 100), x_range=(0, TIME_INTERVAL_DAYS), y_minor_ticks=5,
+                 y_scale=Scale(),
                  toolbar_location=None)
+
+    fig.yaxis.ticker = FixedTicker(ticks=[i for i in range(0, 101, 5)], minor_ticks=[i for i in range(0, 101, 1)])
 
     # The cumulative sum will be a trend line
     for disease in daily_diseases:
