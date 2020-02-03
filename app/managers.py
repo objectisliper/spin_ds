@@ -7,6 +7,7 @@ from uuid import uuid4
 import multiprocessing as mp
 
 from numpy import asarray, savetxt, loadtxt
+from numpy.ma import count
 
 from app.settings import DISEASES_LIST, POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, DISEASES_LUCK_LIST, \
     DOCTOR_CHECK_TIME_INTERVAL, DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY, \
@@ -20,7 +21,7 @@ def decision(probability: float) -> bool:
 
 class StandardPerson:
 
-    def __init__(self, name: str):
+    def __init__(self):
         self.luck = randint(27, 500) / 10000
         self.test_time_interval = randint(160, 1800)
         self.last_test_was = randint(randint(1, randint(2, 30)), int(self.test_time_interval/randint(1, 3)))
@@ -28,7 +29,6 @@ class StandardPerson:
         self.diseases = []
         self.is_notified = False
         self.known_diseases = []
-        self.name = name
         self.__spin_partner_list = []
         self.is_spin_user = decision(SPIN_USERS)
         self.__vaccination = []
@@ -135,8 +135,9 @@ class StandardPerson:
 
 
 def save_output_to_file(results: dict):
-    with open('output.json', 'w+') as f:
-        f.write(json.dumps(results))
+    # with open('output.json', 'w+') as f:
+    #     f.write(json.dumps(results))
+    pass
 
 
 def simulate_simple_connections() -> (dict, list, list):
@@ -147,14 +148,15 @@ def simulate_simple_connections() -> (dict, list, list):
 
     spin_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
-    people_with_diseases_by_day = copy.deepcopy(DISEASES_DETECT_LIST)
+    people_with_diseases_by_day = {}
 
     for i in range(POPULATION):
-        persons.append(StandardPerson(uuid4()))
+        persons.append(StandardPerson())
 
     for disease in DISEASES_DETECT_LIST:
-        people_with_diseases_by_day[f'{disease} SPIN USER'] = []
-        people_with_diseases_by_day[f'{disease} ALL POPULATION'] = []
+        people_with_diseases_by_day[disease, 'SIMPLE USER'] = []
+        people_with_diseases_by_day[disease, 'SPIN USER'] = []
+        people_with_diseases_by_day[disease, 'ALL POPULATION'] = []
 
     get_disease_day_data(people_with_diseases_by_day, persons, 0)
 
@@ -170,10 +172,12 @@ def simulate_simple_connections() -> (dict, list, list):
             if len(person.known_diseases) > 0:
                 luck = luck/2
             if not person.is_already_connected_today and decision(luck):
-                list_of_possible_people_to_connect = list(
-                        filter(lambda person_to_chose: not person_to_chose.is_already_connected_today and
-                               person_to_chose.name != person.name, persons)
-                    )
+                # list_of_possible_people_to_connect = list(
+                #         filter(lambda person_to_chose: not person_to_chose.is_already_connected_today and
+                #                person_to_chose != person, persons)
+                #     )
+
+                list_of_possible_people_to_connect = list(set(persons) - {person})
 
                 people_to_connect = list_of_possible_people_to_connect[randint(0, len(list_of_possible_people_to_connect) - 1)]
             else:
@@ -226,48 +230,49 @@ def simulate_population_change(persons, simple_days_avg, spin_days_avg):
     for i in range(int(randint(*EXIT_PEOPLE_DAY_LUCK)/1000*persons_len)):
         get_days_avg_before_find_disease_for_one(persons.pop(randint(0, len(persons) - 1)), simple_days_avg, spin_days_avg)
     for i in range(int(randint(*NEW_PEOPLE_DAY_LUCK)/1000*persons_len)):
-        persons.append(StandardPerson(uuid4()))
+        persons.append(StandardPerson())
 
 
 def get_disease_day_data(people_with_diseases_by_day, persons, day):
     spin_users = list(filter(lambda person_to_check: person_to_check.is_spin_user, persons))
-    simple_people = list(filter(lambda person_to_check: not person_to_check.is_spin_user, persons))
-    for disease in people_with_diseases_by_day:
-        if 'SPIN USER' in disease:
+    simple_people = list(set(persons) - set(spin_users))
+    for disease, disease_group in people_with_diseases_by_day:
+        if disease_group == 'SPIN USER':
             if day > USER_DAYS_DELAY_BEFORE_USE_SPIN:
-                people_with_diseases_by_day[disease].append(
+                people_with_diseases_by_day[disease, disease_group].append(
                     len(
                         list(
-                            filter(lambda person_to_check: disease.replace(' SPIN USER', '') in person_to_check.diseases,
+                            filter(lambda person_to_check: disease in person_to_check.diseases,
                                    spin_users)
                         )
                     ) / len(spin_users) * 100)
             else:
-                people_with_diseases_by_day[disease].append(0)
-        elif 'ALL POPULATION' in disease:
-            people_with_diseases_by_day[disease].append(
+                people_with_diseases_by_day[disease, disease_group].append(0)
+        elif disease_group == 'ALL POPULATION':
+            people_with_diseases_by_day[disease, disease_group].append(
                 len(list(
-                    filter(lambda person_to_check: disease.replace(' ALL POPULATION', '') in person_to_check.diseases,
+                    filter(lambda person_to_check: disease in person_to_check.diseases,
                            persons)
                 )) / len(persons) * 100
             )
         else:
-            people_with_diseases_by_day[disease].append(
+            people_with_diseases_by_day[disease, disease_group].append(
                 len(list(
                     filter(lambda person_to_check: disease in person_to_check.diseases, simple_people)
                 )) / len(simple_people) * 100
             )
+            count()
 
 
 start_time = time.time()
 
 list_to_print, simple_person_days_avg, spin_person_days_avg = simulate_simple_connections()
 
-print(list_to_print)
-
-print('simple', simple_person_days_avg)
-
-print('spin', spin_person_days_avg)
+# print(list_to_print)
+#
+# print('simple', simple_person_days_avg)
+#
+# print('spin', spin_person_days_avg)
 
 save_output_to_file(list_to_print)
 
