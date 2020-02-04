@@ -1,11 +1,13 @@
 import copy
+import datetime
 import json
 import time
-from random import randint, random
+from random import randint, random, choice, sample
 from statistics import mean
 from uuid import uuid4
 import multiprocessing as mp
 
+import numpy
 from numpy import asarray, savetxt, loadtxt
 from numpy.ma import count
 
@@ -137,14 +139,12 @@ class StandardPerson:
 
 def save_output_to_file(results: dict):
     def remap_keys(mapping):
-        return [{f'{" ".join(k)}': v} for k, v in mapping.items()]
+        return {f'{" ".join(k)}': v for k, v in mapping.items()}
     with open('output.json', 'w+') as f:
         f.write(json.dumps(remap_keys(results)))
 
 
 def simulate_simple_connections() -> (dict, list, list):
-
-    persons = []
 
     simple_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
@@ -152,8 +152,7 @@ def simulate_simple_connections() -> (dict, list, list):
 
     people_with_diseases_by_day = {}
 
-    for i in range(POPULATION):
-        persons.append(StandardPerson())
+    persons = [StandardPerson() for i in range(POPULATION)]
 
     for disease in DISEASES_DETECT_LIST:
         people_with_diseases_by_day[disease, 'SIMPLE USER'] = []
@@ -162,39 +161,9 @@ def simulate_simple_connections() -> (dict, list, list):
 
     get_disease_day_data(people_with_diseases_by_day, persons, 0)
 
-    print(people_with_diseases_by_day)
+    print(datetime.datetime.now())
 
-    save_output_to_file(people_with_diseases_by_day)
-
-    for i in range(TIME_INTERVAL_DAYS):
-        # persons = MultiprocSimulation(persons).process_population()
-
-        for person in persons:
-            luck = person.luck
-            if len(person.known_diseases) > 0:
-                luck = luck/2
-            if not person.is_already_connected_today and decision(luck):
-                # list_of_possible_people_to_connect = list(
-                #         filter(lambda person_to_chose: not person_to_chose.is_already_connected_today and
-                #                person_to_chose != person, persons)
-                #     )
-
-                list_of_possible_people_to_connect = list(set(persons) - {person})
-
-                people_to_connect = list_of_possible_people_to_connect[randint(0, len(list_of_possible_people_to_connect) - 1)]
-            else:
-                people_to_connect = None
-
-            person.live_a_day(people_to_connect, i > USER_DAYS_DELAY_BEFORE_USE_SPIN)
-
-        for person in persons:
-            person.is_already_connected_today = False
-            person.is_notified = False
-
-        get_disease_day_data(people_with_diseases_by_day, persons, i)
-
-        simulate_population_change(persons, simple_person_days_avg, spin_person_days_avg)
-        # print(people_with_diseases_by_day)
+    iterate_through_days(people_with_diseases_by_day, persons, simple_person_days_avg, spin_person_days_avg)
 
     get_days_avg_before_find_disease_for_all(persons, simple_person_days_avg, spin_person_days_avg)
 
@@ -203,6 +172,47 @@ def simulate_simple_connections() -> (dict, list, list):
     calculate_avg(spin_person_days_avg)
 
     return people_with_diseases_by_day, simple_person_days_avg, spin_person_days_avg
+
+
+def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, spin_days_avg):
+    for i in range(TIME_INTERVAL_DAYS):
+        # persons = MultiprocSimulation(persons).process_population()
+
+        try_to_connect_persons(i, persons)
+
+        for person in persons:
+            person.is_already_connected_today = False
+            person.is_notified = False
+
+        get_disease_day_data(people_with_diseases_by_day, persons, i)
+
+        simulate_population_change(persons, simple_days_avg, spin_days_avg)
+        # print(people_with_diseases_by_day)
+
+
+def try_to_connect_persons(day, persons):
+    for person in persons:
+        people_to_connect = get_people_to_connect(person, persons)
+
+        person.live_a_day(people_to_connect, day > USER_DAYS_DELAY_BEFORE_USE_SPIN)
+
+
+def get_people_to_connect(person, persons):
+    luck = person.luck
+    if len(person.known_diseases) > 0:
+        luck = luck / 2
+    if not person.is_already_connected_today and decision(luck):
+        # list_of_possible_people_to_connect = list(
+        #         filter(lambda person_to_chose: not person_to_chose.is_already_connected_today and
+        #                person_to_chose != person, persons)
+        #     )
+
+        list_of_possible_people_to_connect = sample(persons, 2)
+
+        people_to_connect = list_of_possible_people_to_connect[0] if list_of_possible_people_to_connect[0] != person else list_of_possible_people_to_connect[1]
+    else:
+        people_to_connect = None
+    return people_to_connect
 
 
 def calculate_avg(days_avg):
