@@ -32,7 +32,7 @@ def get_figure():
     for disease in daily_diseases:
         fig.line(x=np.linspace(1, len(daily_diseases[disease]), len(daily_diseases[disease])),
                  y=daily_diseases[disease],
-                 color=COLOR_BY_DISEASE[(disease.replace(' SPIN USER', '')).replace(' ALL POPULATION', '')],
+                 color=COLOR_BY_DISEASE[((disease.replace(' SPIN USER', '')).replace(' ALL POPULATION', '')).replace(' SIMPLE USER', '')],
                  line_width=4 if 'ALL POPULATION' in disease else 2,
                  legend_label=disease,
                  line_dash='dotted' if 'SPIN USER' in disease else 'dashed' if 'ALL POPULATION' in disease else 'solid')

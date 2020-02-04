@@ -44,6 +44,8 @@ class StandardPerson:
             if decision(DISEASES_LIST.get(disease)):
                 self.diseases.append(disease)
 
+        self.__count_days_before_found()
+
     def __vaccination_try(self):
         for disease in VACCINATION:
             if decision(VACCINATION[disease]):
@@ -55,6 +57,11 @@ class StandardPerson:
             if len(output_days[key]) > 0:
                 yield key, mean(output_days[key])
 
+    def __check_is_need_to_start_day_counting(self):
+        for disease in self.diseases:
+            if disease not in self.known_diseases and disease not in self.__days_before_found_disease:
+                self.__days_before_found_disease[disease] = 0
+
     def __count_days_before_found(self):
         for disease in self.diseases:
             if disease not in self.known_diseases:
@@ -64,14 +71,20 @@ class StandardPerson:
                     self.__days_before_found_disease[disease] = 0
 
     def __clear_days_before_found(self, disease):
-        self.__days_before_found_disease_avg[disease].append(self.__days_before_found_disease.pop(disease, 0))
+        try:
+            self.__days_before_found_disease_avg[disease].append(self.__days_before_found_disease.pop(disease))
+        except KeyError as e:
+            print(self.__days_before_found_disease)
+            print(self.__days_before_found_disease_avg)
+            print(self.diseases)
+            print(self.known_diseases)
+            raise e
 
     def live_a_day(self, person_to_connect, start_use_spin):
         if person_to_connect is not None:
             person_to_connect.connect(self, start_use_spin)
             self.connect(person_to_connect, start_use_spin)
-        if len(self.known_diseases) > 0:
-            self.__count_days_before_found()
+        self.__count_days_before_found()
         self.last_test_was -= 1
         self.check_is_need_go_to_doctor()
         if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
@@ -98,6 +111,7 @@ class StandardPerson:
                 partner.notified(self)
         self.__clear_spin_partner_list()
         if decision(REACT_LUCKY):
+            self.__check_is_need_to_start_day_counting()
             self.check_is_need_go_to_doctor(is_spin=True)
 
     def check_is_need_go_to_doctor(self, is_spin=False):
@@ -116,8 +130,8 @@ class StandardPerson:
         for disease_index, disease in enumerate(self.diseases):
             if doctor:
                 if disease not in self.known_diseases:
-                    self.known_diseases.append(disease)
                     self.__clear_days_before_found(disease)
+                    self.known_diseases.append(disease)
             if disease not in DISEASES_LUCK_HEAL_LIST:
                 self.diseases.pop(disease_index)
             elif doctor and decision(DISEASES_LUCK_HEAL_LIST[disease]):
