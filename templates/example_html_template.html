@@ -9,6 +9,22 @@
         </style>
     </head>
 <body>
+    <ul style="
+                list-style-type: none;
+                font-size: 14px;
+                width: 750px;
+                position: absolute;
+                background: white;
+                z-index: 1;
+                right: 30px;
+                top: 40px;
+                border: 1px solid #e5e5e5;
+                padding: 12px;
+    ">
+    {% for simulation_setting in simulation_settings %}
+        <li> {{ simulation_setting }} : {{ simulation_settings[simulation_setting] }}</li>
+    {% end %}
+    </ul>
     {% raw embed_bokeh_html %}
 </body>
 </html>

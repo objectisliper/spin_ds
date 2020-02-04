@@ -21,13 +21,13 @@ VACCINATION = {'HPV': 0.215}
 
 SPIN_USERS = 0.1
 
-DOCTOR_CHECK_TIME_INTERVAL = 1100
-
 REACT_LUCKY = 0.9
 
 NEW_PEOPLE_DAY_LUCK = 1, 1
 
 EXIT_PEOPLE_DAY_LUCK = 1, 1
+
+SPIN_USER_CONNECT_SIMPLE_USER_LUCK = 0.9
 
 COLOR_BY_DISEASE = {
     'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet',

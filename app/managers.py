@@ -12,9 +12,9 @@ from numpy import asarray, savetxt, loadtxt
 from numpy.ma import count
 
 from app.settings import DISEASES_LIST, POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, DISEASES_LUCK_LIST, \
-    DOCTOR_CHECK_TIME_INTERVAL, DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY, \
+    DISEASES_LUCK_HEAL_LIST, VACCINATION, SPIN_USERS, REACT_LUCKY, \
     DISEASES_DAILY_LUCK_HEAL_LIST, USER_DAYS_DELAY_BEFORE_USE_SPIN, UNHEALABLE_DISEASES, NEW_PEOPLE_DAY_LUCK, \
-    EXIT_PEOPLE_DAY_LUCK
+    EXIT_PEOPLE_DAY_LUCK, SPIN_USER_CONNECT_SIMPLE_USER_LUCK
 
 
 def decision(probability: float) -> bool:
@@ -82,8 +82,9 @@ class StandardPerson:
 
     def live_a_day(self, person_to_connect, start_use_spin):
         if person_to_connect is not None:
-            person_to_connect.connect(self, start_use_spin)
-            self.connect(person_to_connect, start_use_spin)
+            if not self.is_spin_user or person_to_connect.is_spin_user or decision(SPIN_USER_CONNECT_SIMPLE_USER_LUCK):
+                person_to_connect.connect(self, start_use_spin)
+                self.connect(person_to_connect, start_use_spin)
         self.__count_days_before_found()
         self.last_test_was -= 1
         self.check_is_need_go_to_doctor()
