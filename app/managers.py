@@ -29,6 +29,8 @@ class StandardPerson:
         self.last_test_was = randint(randint(1, randint(2, 30)), int(self.test_time_interval/randint(1, 3)))
         self.is_already_connected_today = bool(randint(0, 1))
         self.diseases = []
+        self.count_of_doctor_visits_per_year = []
+        self.count_of_doctor_visits = 0
         self.is_notified = False
         self.known_diseases = []
         self.__spin_partner_list = []
@@ -37,6 +39,8 @@ class StandardPerson:
         self.__vaccination_try()
         self.__days_before_found_disease = {}
         self.__days_before_found_disease_avg = copy.deepcopy(DISEASES_DETECT_LIST)
+        self.__count_of_notifications = 0
+        self.__count_of_useful_notifications = 0
 
         for disease in DISEASES_LIST:
             if len(self.diseases) > 14:
@@ -46,16 +50,70 @@ class StandardPerson:
 
         self.__count_days_before_found()
 
-    def __vaccination_try(self):
-        for disease in VACCINATION:
-            if decision(VACCINATION[disease]):
-                self.__vaccination.append(disease)
+    def percent_of_useful_notifications(self):
+        return self.__count_of_useful_notifications/self.__count_of_notifications*100
 
     def get_days_before_found_disease_avg(self) -> (str, int):
         output_days = copy.deepcopy(self.__days_before_found_disease_avg)
         for key in output_days:
             if len(output_days[key]) > 0:
                 yield key, mean(output_days[key])
+
+    def live_a_day(self, person_to_connect, start_use_spin, new_year=False):
+        if person_to_connect is not None:
+            if not self.is_spin_user or person_to_connect.is_spin_user or decision(SPIN_USER_CONNECT_SIMPLE_USER_LUCK):
+                person_to_connect.connect(self, start_use_spin)
+                self.connect(person_to_connect, start_use_spin)
+        self.__count_days_before_found()
+        self.last_test_was -= 1
+        self.check_is_need_go_to_doctor()
+        if new_year:
+            self.count_of_doctor_visits_per_year.append(self.count_of_doctor_visits)
+            self.count_of_doctor_visits = 0
+        if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
+            self.__try_to_heal()
+
+    def connect(self, person_to_connect, start_use_spin):
+        if start_use_spin and self.is_spin_user and person_to_connect.is_spin_user:
+            self.__spin_partner_list.append(person_to_connect)
+        for connect_disease in person_to_connect.diseases:
+            if connect_disease in self.diseases:
+                continue
+            elif len(self.diseases) > 14:
+                break
+            elif decision(DISEASES_LIST.get(connect_disease)):
+                if connect_disease not in self.__vaccination and \
+                        (connect_disease not in DISEASES_LUCK_LIST or decision(DISEASES_LUCK_LIST[connect_disease])):
+                    self.diseases.append(connect_disease)
+        self.is_already_connected_today = True
+
+    def notified(self, from_who):
+        self.is_notified = True
+        self.__count_of_notifications += 1
+        for partner in self.__spin_partner_list:
+            if partner != from_who and not partner.is_notified:
+                partner.notified(self)
+        self.__clear_spin_partner_list()
+        if decision(REACT_LUCKY):
+            self.__check_is_need_to_start_day_counting()
+            self.check_is_need_go_to_doctor(is_spin=True)
+
+    def check_is_need_go_to_doctor(self, is_spin=False):
+        if self.last_test_was < 1 or is_spin:
+            self.count_of_doctor_visits += 1
+            self.last_test_was = self.test_time_interval
+            if is_spin and len(self.diseases) > 0:
+                self.__count_of_useful_notifications += 1
+            if self.is_spin_user and len(self.diseases) > 0 and not is_spin:
+                for partner in self.__spin_partner_list:
+                    partner.notified(self)
+                self.__clear_spin_partner_list()
+            self.__try_to_heal(doctor=True)
+
+    def __vaccination_try(self):
+        for disease in VACCINATION:
+            if decision(VACCINATION[disease]):
+                self.__vaccination.append(disease)
 
     def __check_is_need_to_start_day_counting(self):
         for disease in self.diseases:
@@ -79,50 +137,6 @@ class StandardPerson:
             print(self.diseases)
             print(self.known_diseases)
             raise e
-
-    def live_a_day(self, person_to_connect, start_use_spin):
-        if person_to_connect is not None:
-            if not self.is_spin_user or person_to_connect.is_spin_user or decision(SPIN_USER_CONNECT_SIMPLE_USER_LUCK):
-                person_to_connect.connect(self, start_use_spin)
-                self.connect(person_to_connect, start_use_spin)
-        self.__count_days_before_found()
-        self.last_test_was -= 1
-        self.check_is_need_go_to_doctor()
-        if len(self.known_diseases) > 0 and not self.__is_only_unhealable_known_diseases:
-            self.__try_to_heal()
-
-    def connect(self, person_to_connect, start_use_spin):
-        if start_use_spin and self.is_spin_user and person_to_connect.is_spin_user:
-            self.__spin_partner_list.append(person_to_connect)
-        for connect_disease in person_to_connect.diseases:
-            if connect_disease in self.diseases:
-                continue
-            elif len(self.diseases) > 14:
-                break
-            elif decision(DISEASES_LIST.get(connect_disease)):
-                if connect_disease not in self.__vaccination and \
-                        (connect_disease not in DISEASES_LUCK_LIST or decision(DISEASES_LUCK_LIST[connect_disease])):
-                    self.diseases.append(connect_disease)
-        self.is_already_connected_today = True
-
-    def notified(self, from_who):
-        self.is_notified = True
-        for partner in self.__spin_partner_list:
-            if partner != from_who and not partner.is_notified:
-                partner.notified(self)
-        self.__clear_spin_partner_list()
-        if decision(REACT_LUCKY):
-            self.__check_is_need_to_start_day_counting()
-            self.check_is_need_go_to_doctor(is_spin=True)
-
-    def check_is_need_go_to_doctor(self, is_spin=False):
-        if self.last_test_was < 1 or is_spin:
-            self.last_test_was = self.test_time_interval
-            if self.is_spin_user and len(self.diseases) > 0 and not is_spin:
-                for partner in self.__spin_partner_list:
-                    partner.notified(self)
-                self.__clear_spin_partner_list()
-            self.__try_to_heal(doctor=True)
 
     def __clear_spin_partner_list(self):
         self.__spin_partner_list = []
@@ -159,11 +173,13 @@ def save_output_to_file(results: dict):
         f.write(json.dumps(remap_keys(results)))
 
 
-def simulate_simple_connections() -> (dict, list, list):
+def simulate_simple_connections() -> (dict, list, list, dict):
 
     simple_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
     spin_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
+
+    count_of_doctor_visits = {'simple_user': [], 'spin_user': []}
 
     people_with_diseases_by_day = {}
 
@@ -178,18 +194,37 @@ def simulate_simple_connections() -> (dict, list, list):
 
     print(datetime.datetime.now())
 
-    iterate_through_days(people_with_diseases_by_day, persons, simple_person_days_avg, spin_person_days_avg)
+    iterate_through_days(people_with_diseases_by_day, persons, simple_person_days_avg, spin_person_days_avg,
+                         count_of_doctor_visits)
 
     get_days_avg_before_find_disease_for_all(persons, simple_person_days_avg, spin_person_days_avg)
+
+    get_count_of_doctor_visits_for_all(persons, count_of_doctor_visits)
 
     calculate_avg(simple_person_days_avg)
 
     calculate_avg(spin_person_days_avg)
 
-    return people_with_diseases_by_day, simple_person_days_avg, spin_person_days_avg
+    calculate_avg(count_of_doctor_visits)
+
+    return people_with_diseases_by_day, simple_person_days_avg, spin_person_days_avg, count_of_doctor_visits
 
 
-def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, spin_days_avg):
+def get_count_of_doctor_visits_for_all(persons, count_of_doctor_visits):
+    for person in persons:
+        get_count_of_doctor_visits_for_one(person, count_of_doctor_visits)
+
+
+def get_count_of_doctor_visits_for_one(person, count_of_doctor_visits):
+    if len(person.count_of_doctor_visits_per_year) > 0:
+        avg_count_of_doctor_visits = mean(person.count_of_doctor_visits_per_year)
+        if person.is_spin_user:
+            count_of_doctor_visits['spin_user'].append(avg_count_of_doctor_visits)
+        else:
+            count_of_doctor_visits['simple_user'].append(avg_count_of_doctor_visits)
+
+
+def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, spin_days_avg, count_of_doctor_visits):
     for i in range(TIME_INTERVAL_DAYS):
         # persons = MultiprocSimulation(persons).process_population()
 
@@ -201,7 +236,7 @@ def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, 
 
         get_disease_day_data(people_with_diseases_by_day, persons, i)
 
-        simulate_population_change(persons, simple_days_avg, spin_days_avg)
+        simulate_population_change(persons, simple_days_avg, spin_days_avg, count_of_doctor_visits)
         # print(people_with_diseases_by_day)
 
 
@@ -209,7 +244,7 @@ def try_to_connect_persons(day, persons):
     for person in persons:
         people_to_connect = get_people_to_connect(person, persons)
 
-        person.live_a_day(people_to_connect, day > USER_DAYS_DELAY_BEFORE_USE_SPIN)
+        person.live_a_day(people_to_connect, day > USER_DAYS_DELAY_BEFORE_USE_SPIN, day % 365)
 
 
 def get_people_to_connect(person, persons):
@@ -230,9 +265,9 @@ def get_people_to_connect(person, persons):
     return people_to_connect
 
 
-def calculate_avg(days_avg):
-    for disease in days_avg:
-        days_avg[disease] = mean(days_avg[disease])
+def calculate_avg(dict_of_values_to_calculate_avg):
+    for key in dict_of_values_to_calculate_avg:
+        dict_of_values_to_calculate_avg[key] = mean(dict_of_values_to_calculate_avg[key])
 
 
 def get_days_avg_before_find_disease_for_all(persons, simple_days_avg, spin_days_avg):
@@ -248,10 +283,12 @@ def get_days_avg_before_find_disease_for_one(person, simple_days_avg, spin_days_
             simple_days_avg[disease].append(value)
 
 
-def simulate_population_change(persons, simple_days_avg, spin_days_avg):
+def simulate_population_change(persons, simple_days_avg, spin_days_avg, count_of_doctor_visits):
     persons_len = len(persons)
     for i in range(int(randint(*EXIT_PEOPLE_DAY_LUCK)/1000*persons_len)):
-        get_days_avg_before_find_disease_for_one(persons.pop(randint(0, len(persons) - 1)), simple_days_avg, spin_days_avg)
+        person_that_exit = persons.pop(randint(0, len(persons) - 1))
+        get_count_of_doctor_visits_for_one(person_that_exit, count_of_doctor_visits)
+        get_days_avg_before_find_disease_for_one(person_that_exit, simple_days_avg, spin_days_avg)
     for i in range(int(randint(*NEW_PEOPLE_DAY_LUCK)/1000*persons_len)):
         persons.append(StandardPerson())
 
@@ -282,13 +319,19 @@ def get_disease_day_data(people_with_diseases_by_day, persons, day):
 
 start_time = time.time()
 
-list_to_print, simple_person_days_avg, spin_person_days_avg = simulate_simple_connections()
+list_to_print, simple_person_days_avg, spin_person_days_avg, count_of_visits = simulate_simple_connections()
 
 print(list_to_print)
 
 print('simple', simple_person_days_avg)
 
 print('spin', spin_person_days_avg)
+
+print('count_of_doctor_visits', count_of_visits)
+
+percent_diff = ((count_of_visits['spin_user'] - count_of_visits['simple_user'])/count_of_visits['spin_user']) * 100
+
+print('count_of_doctor_visits percent diff', percent_diff)
 
 save_output_to_file(list_to_print)
 
