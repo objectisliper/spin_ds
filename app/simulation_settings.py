@@ -1,7 +1,7 @@
 DISEASES_LIST = {'Chlamydia': 0.03, "HPV": 0.426,
                  'HSV-2': 0.1205}
 
-POPULATION = 10000
+POPULATION = 1000
 
 TIME_INTERVAL_DAYS = 6000
 

@@ -1,5 +1,5 @@
 import json
-from random import randint
+from random import randint, random
 
 import numpy as np
 
@@ -11,6 +11,10 @@ from bokeh.resources import INLINE
 from numpy import loadtxt
 
 from .settings import PORT, DOMAIN, PROTOCOL, TIME_INTERVAL_DAYS, COLOR_BY_DISEASE, USER_DAYS_DELAY_BEFORE_USE_SPIN
+
+
+def decision(probability: float) -> bool:
+    return random() < probability
 
 
 def get_figure():
