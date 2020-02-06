@@ -12,20 +12,22 @@ from app.settings import POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, \
 from app.utils import decision
 
 
-def save_output_to_file(results: dict):
+def save_output_to_file(results: dict, file_name, is_keys_tuple=False):
     def remap_keys(mapping):
-        return {f'{" ".join(k)}': v for k, v in mapping.items()}
+        return {" ".join(k): v for k, v in mapping.items()}
 
-    with open('output.json', 'w+') as f:
-        f.write(json.dumps(remap_keys(results)))
+    with open(file_name, 'w+') as f:
+        f.write(json.dumps(remap_keys(results) if is_keys_tuple else results))
 
 
-def simulate_simple_connections() -> (dict, list, list, dict, float, float):
+def simulate_simple_connections() -> (dict, list, list, dict, float, float, list):
     simple_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
     spin_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
 
     count_of_doctor_visits = {'simple_user': [], 'spin_user': []}
+
+    infections_via_connection_percent = {'simple_user': [], 'spin_user': []}
 
     percent_of_useful_notifications = []
 
@@ -43,7 +45,7 @@ def simulate_simple_connections() -> (dict, list, list, dict, float, float):
     print(datetime.datetime.now())
 
     iterate_through_days(people_with_diseases_by_day, persons, simple_person_days_avg, spin_person_days_avg,
-                         count_of_doctor_visits, percent_of_useful_notifications)
+                         count_of_doctor_visits, percent_of_useful_notifications, infections_via_connection_percent)
 
     percent_of_spin_users_that_have_notifications = get_analytics_data(persons, simple_person_days_avg,
                                                                        spin_person_days_avg, count_of_doctor_visits,
@@ -56,7 +58,8 @@ def simulate_simple_connections() -> (dict, list, list, dict, float, float):
     calculate_avg(count_of_doctor_visits)
 
     return people_with_diseases_by_day, simple_person_days_avg, spin_person_days_avg, count_of_doctor_visits, \
-           mean(percent_of_useful_notifications), percent_of_spin_users_that_have_notifications
+           mean(percent_of_useful_notifications), percent_of_spin_users_that_have_notifications, \
+           infections_via_connection_percent
 
 
 def get_analytics_data(persons, simple_days_avg, spin_days_avg, count_of_doctor_visits,
@@ -93,15 +96,43 @@ def get_days_avg_before_find_disease_for_one(person, simple_days_avg, spin_days_
 
 
 def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, spin_days_avg, count_of_doctor_visits,
-                         percent_of_useful_notifications):
+                         percent_of_useful_notifications, infections_via_connection_percent):
     for i in range(TIME_INTERVAL_DAYS):
         # persons = MultiprocSimulation(persons).process_population()
 
         try_to_connect_persons(i, persons)
 
+        total_simple_connection_quantity = 0
+        total_simple_infection_via_connection_quantity = 0
+
+        total_spin_connection_quantity = 0
+        total_spin_infection_via_connection_quantity = 0
+
         for person in persons:
+            if person.is_already_connected_today:
+                if person.is_connected_with_spin_user:
+                    total_spin_connection_quantity += 1
+                else:
+                    total_simple_connection_quantity += 1
+                if person.was_infected_today:
+                    if person.is_connected_with_spin_user:
+                        total_spin_infection_via_connection_quantity += 1
+                    else:
+                        total_simple_infection_via_connection_quantity += 1
             person.is_already_connected_today = False
             person.is_notified = False
+            person.was_infected_today = False
+            person.is_connected_with_spin_user = False
+            person.is_connected_with_simple_user = False
+
+
+        infections_via_connection_percent['simple_user'].append(
+            (total_simple_infection_via_connection_quantity / total_simple_connection_quantity) * 100 if total_simple_connection_quantity != 0 else 0
+        )
+
+        infections_via_connection_percent['spin_user'].append(
+            (total_spin_infection_via_connection_quantity / total_spin_connection_quantity) * 100 if total_spin_connection_quantity != 0 else 0
+        )
 
         get_disease_day_data(people_with_diseases_by_day, persons, i)
 

@@ -15,6 +15,9 @@ class StandardPerson:
         self.test_time_interval = randint(160, 1800)
         self.last_test_was = randint(randint(1, randint(2, 30)), int(self.test_time_interval / randint(1, 3)))
         self.is_already_connected_today = bool(randint(0, 1))
+        self.was_infected_today = False
+        self.is_connected_with_spin_user = False
+        self.is_connected_with_simple_user = False
         self.diseases = []
         self.count_of_doctor_visits_per_year = []
         self.count_of_doctor_visits = 0
@@ -64,6 +67,10 @@ class StandardPerson:
             self.__try_to_heal()
 
     def connect(self, person_to_connect, start_use_spin):
+        if person_to_connect.is_spin_user:
+            self.is_connected_with_spin_user = True
+        else:
+            self.is_connected_with_simple_user = True
         if start_use_spin and self.is_spin_user and person_to_connect.is_spin_user:
             self.__spin_partner_list.append(person_to_connect)
         for connect_disease in person_to_connect.diseases:
@@ -75,6 +82,7 @@ class StandardPerson:
                 if connect_disease not in self.__vaccination and \
                         (connect_disease not in DISEASES_LUCK_LIST or decision(DISEASES_LUCK_LIST[connect_disease])):
                     self.diseases.append(connect_disease)
+                    self.was_infected_today = True
         self.is_already_connected_today = True
 
     def notified(self, from_who):

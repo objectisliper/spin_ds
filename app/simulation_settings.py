@@ -1,7 +1,7 @@
 DISEASES_LIST = {'Chlamydia': 0.03, "HPV": 0.426,
                  'HSV-2': 0.1205}
 
-POPULATION = 1000
+POPULATION = 300000
 
 TIME_INTERVAL_DAYS = 6000
 
@@ -27,9 +27,17 @@ NEW_PEOPLE_DAY_LUCK = 1, 1
 
 EXIT_PEOPLE_DAY_LUCK = 1, 1
 
+TOTAL_INFECTED_PEOPLE_OUTPUT_FILE = 'output.json'
+
+PERCENT_OF_INFECTIONS_BY_DAY_OUTPUT_FILE = 'output2.json'
+
 SPIN_USER_CONNECT_SIMPLE_USER_LUCK = 0.9
 
 COLOR_BY_DISEASE = {
     'HIV': 'blue', 'Chlamydia': 'red', 'HSV-2': 'green', 'Gonorrhea': 'yellow', 'HBV': 'violet',
     'HPV': 'orange'
+}
+
+COLOR_BY_USER_TYPE = {
+    'spin_user': 'red', 'simple_user': 'orange'
 }
