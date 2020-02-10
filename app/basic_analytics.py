@@ -6,7 +6,8 @@ from app.simulation_settings import TOTAL_INFECTED_PEOPLE_OUTPUT_FILE, PERCENT_O
 start_time = time.time()
 
 list_to_print, simple_person_days_avg, spin_person_days_avg, count_of_visits, percent_of_useful_notifications, \
-percent_of_spin_users_that_have_notifications, infections_via_connection_percent = simulate_simple_connections()
+percent_of_spin_users_that_have_notifications, infections_via_connection_percent, \
+count_of_useful_doctor_visits = simulate_simple_connections()
 
 print(list_to_print)
 
@@ -25,6 +26,8 @@ print('percent_of_useful_notifications', percent_of_useful_notifications)
 print('percent_of_spin_users_that_have_notifications', percent_of_spin_users_that_have_notifications)
 
 print('infections_via_connection_percent', infections_via_connection_percent)
+
+print('count_of_useful_doctor_visits (simple_users)', count_of_useful_doctor_visits)
 
 save_output_to_file(list_to_print, TOTAL_INFECTED_PEOPLE_OUTPUT_FILE, is_keys_tuple=True)
 

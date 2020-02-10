@@ -1,8 +1,9 @@
 import copy
+import os
 from random import randint, random
 from statistics import mean
 
-from app.simulation_settings import SPIN_USERS, DISEASES_LIST, SPIN_USER_CONNECT_SIMPLE_USER_LUCK, DISEASES_LUCK_LIST, \
+from app.simulation_settings import DISEASES_LIST, SPIN_USER_CONNECT_SIMPLE_USER_LUCK, DISEASES_LUCK_LIST, \
     DISEASES_DETECT_LIST, REACT_LUCKY, VACCINATION, DISEASES_LUCK_HEAL_LIST, DISEASES_DAILY_LUCK_HEAL_LIST, \
     UNHEALABLE_DISEASES
 from app.utils import decision
@@ -15,16 +16,17 @@ class StandardPerson:
         self.test_time_interval = randint(160, 1800)
         self.last_test_was = randint(randint(1, randint(2, 30)), int(self.test_time_interval / randint(1, 3)))
         self.is_already_connected_today = bool(randint(0, 1))
-        self.was_infected_today = False
+        self.was_infected_today = []
         self.is_connected_with_spin_user = False
         self.is_connected_with_simple_user = False
         self.diseases = []
         self.count_of_doctor_visits_per_year = []
         self.count_of_doctor_visits = 0
+        self.__count_of_useful_doctor_visits = 0
         self.is_notified = False
         self.known_diseases = []
         self.__spin_partner_list = []
-        self.is_spin_user = decision(SPIN_USERS)
+        self.is_spin_user = decision(float(os.getenv('SPIN_USERS')))
         self.__vaccination = []
         self.__vaccination_try()
         self.__days_before_found_disease = {}
@@ -40,8 +42,14 @@ class StandardPerson:
 
         self.__count_days_before_found()
 
+    def get_percent_of_useful_doctor_visits(self):
+        if sum(self.count_of_doctor_visits_per_year) > 0:
+            return (self.__count_of_useful_doctor_visits / sum(self.count_of_doctor_visits_per_year)) * 100
+        else:
+            return 0
+
     def get_percent_of_useful_notifications(self):
-        return self.__count_of_useful_notifications / self.__count_of_notifications * 100
+        return (self.__count_of_useful_notifications / self.__count_of_notifications) * 100
 
     def is_already_have_notifications(self):
         return self.__count_of_notifications > 0
@@ -82,7 +90,7 @@ class StandardPerson:
                 if connect_disease not in self.__vaccination and \
                         (connect_disease not in DISEASES_LUCK_LIST or decision(DISEASES_LUCK_LIST[connect_disease])):
                     self.diseases.append(connect_disease)
-                    self.was_infected_today = True
+                    self.was_infected_today.append(connect_disease)
         self.is_already_connected_today = True
 
     def notified(self, from_who):
@@ -100,8 +108,10 @@ class StandardPerson:
         if self.last_test_was < 1 or is_spin:
             self.count_of_doctor_visits += 1
             self.last_test_was = self.test_time_interval
-            if is_spin and len(self.diseases) > 0:
-                self.__count_of_useful_notifications += 1
+            if len(self.diseases) > 0 and any(disease not in self.known_diseases for disease in self.diseases):
+                if is_spin:
+                    self.__count_of_useful_notifications += 1
+                self.__count_of_useful_doctor_visits += 1
             if self.is_spin_user and len(self.diseases) > 0 and not is_spin:
                 for partner in self.__spin_partner_list:
                     partner.notified(self)
@@ -157,8 +167,4 @@ class StandardPerson:
                     self.known_diseases.pop(self.known_diseases.index(disease))
 
     def __is_only_unhealable_known_diseases(self) -> bool:
-        unheal_diseases_number = 0
-        for disease in self.known_diseases:
-            if disease in UNHEALABLE_DISEASES:
-                unheal_diseases_number += 1
-        return len(self.known_diseases) == unheal_diseases_number
+        return all(disease in UNHEALABLE_DISEASES for disease in self.known_diseases)

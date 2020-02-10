@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <form class="col-12" action="/parametrized" method="GET">
+            <div class="form-group">
+                <label for="POPULATION">Population</label>
+                <input type="number" class="form-control" name="POPULATION" id="POPULATION" placeholder="Enter population" required value="1000">
+            </div>
+            <div class="form-group">
+                <label for="TIME_INTERVAL_DAYS">Time interval in days</label>
+                <input type="number" class="form-control" name="TIME_INTERVAL_DAYS" id="TIME_INTERVAL_DAYS" placeholder="2000" required value="3562">
+            </div>
+            <div class="form-group">
+                <label for="USER_DAYS_DELAY_BEFORE_USE_SPIN">User delay before use Spin</label>
+                <input type="number" class="form-control" name="USER_DAYS_DELAY_BEFORE_USE_SPIN" id="USER_DAYS_DELAY_BEFORE_USE_SPIN" required placeholder="1000" value="1000">
+            </div>
+            <p>Diseases to detect:</p>
+            {% for disease in diseases %}
+            <div class="form-check" style="margin-left: 20px;">
+                <input class="form-check-input" checked name="DISEASES_DETECT_LIST[]" value="{{ disease }}" type="checkbox" id="DISEASES_DETECT_LIST_{{ disease }}">
+                <label class="form-check-label" for="DISEASES_DETECT_LIST_{{ disease }}">
+                {{ disease }}
+                </label>
+            </div>
+            {% end %}
+            <p>Unhealable disease:</p>
+            {% for disease in diseases %}
+            <div class="form-check" style="margin-left: 20px;">
+                <input class="form-check-input"
+                {% if disease in unhelable_diseases %}
+                checked
+                {% end %}
+                name="UNHEALABLE_DISEASES[]" value="{{ disease }}" type="checkbox" id="UNHEALABLE_DISEASES_{{ disease }}">
+                <label class="form-check-label" for="UNHEALABLE_DISEASES_{{ disease }}">
+                {{ disease }}
+                </label>
+            </div>
+            {% end %}
+            <p>Disease prevalence percent:</p>
+            {% for disease in diseases_prevalence %}
+            <div class="form-group" style="margin-left: 20px;">
+                <label for="DISEASES_LIST_{{ disease }}">{{ disease }}</label>
+                <input type="number" class="form-control" name="DISEASES_LIST_{{ disease }}" id="DISEASES_LIST_{{ disease }}" required value="{{ diseases_prevalence[disease] * 100 }}" min="0" max="100">
+            </div>
+            {% end %}
+          <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Submit</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

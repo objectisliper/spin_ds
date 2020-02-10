@@ -1,6 +1,7 @@
-from app.views import MainView, PlotJsView
+from app.views import MainView, SetUpSimulationView, ParametrizedSimulationView
 
 url_list = [
         (r"/", MainView),
-        (r"/plot.js", PlotJsView)
+        (r"/setup", SetUpSimulationView),
+        (r"/parametrized", ParametrizedSimulationView)
     ]
