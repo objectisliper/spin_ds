@@ -12,7 +12,7 @@ from app.utils import set_environment
 parser = argparse.ArgumentParser(description="aiohttp server example")
 parser.add_argument('--path')
 parser.add_argument('--port')
-parser.add_argument('--live')
+parser.add_argument('--live', action='store_true')
 
 
 def make_app():
@@ -32,6 +32,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.live:
-        web.run_app(app, path=args.path, port=args.port)
+        print('test')
+        # web.run_app(app, path=args.path, port=args.port)
     else:
         web.run_app(app, host="127.0.0.1", port=PORT)
