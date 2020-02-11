@@ -9,9 +9,22 @@
         </style>
     </head>
     <script>
-        {% raw embed_js %}
+        {{ embed_js|safe }}
     </script>
 <body>
+    {% if is_live_render %}
+        <h3 style="margin: 15px auto; display: block;">Live render params:</h3>
+        <ul>
+            <li>wasted_time: {{ wasted_time }}</li>
+            <li>simple: {{ simple_person_days_avg }}</li>
+            <li>spin: {{ spin_person_days_avg }}</li>
+            <li>count_of_doctor_visits: {{ count_of_visits }}</li>
+            <li>count_of_doctor_visits percent diff {{ percent_diff }}</li>
+            <li>percent_of_useful_notifications {{ percent_of_useful_notifications }}</li>
+            <li>percent_of_spin_users_that_have_notifications {{ percent_of_spin_users_that_have_notifications }}</li>
+            <li>count_of_useful_doctor_visits (simple_users) {{ count_of_useful_doctor_visits }}</li>
+        </ul>
+    {% endif %}
     <ul style="
                 list-style-type: none;
                 font-size: 14px;
@@ -20,14 +33,14 @@
                 background: white;
                 z-index: 1;
                 right: 30px;
-                top: 40px;
+                top: 10px;
                 border: 1px solid #e5e5e5;
                 padding: 12px;
     ">
     {% for simulation_setting in simulation_settings %}
         <li> {{ simulation_setting }} : {{ simulation_settings[simulation_setting] }}</li>
-    {% end %}
+    {% endfor %}
     </ul>
-    {% raw embed_bokeh_html %}
+    {{ embed_bokeh_html|safe }}
 </body>
 </html>

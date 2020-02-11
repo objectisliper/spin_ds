@@ -1,7 +1,9 @@
+from aiohttp import web
+
 from app.views import MainView, SetUpSimulationView, ParametrizedSimulationView
 
 url_list = [
-        (r"/", MainView),
-        (r"/setup", SetUpSimulationView),
-        (r"/parametrized", ParametrizedSimulationView)
+        web.view("/", MainView),
+        web.view("/setup", SetUpSimulationView),
+        web.view("/parametrized", ParametrizedSimulationView)
     ]

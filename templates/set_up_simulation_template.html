@@ -21,6 +21,14 @@
                 <input type="number" class="form-control" name="TIME_INTERVAL_DAYS" id="TIME_INTERVAL_DAYS" placeholder="2000" required value="3562">
             </div>
             <div class="form-group">
+                <label for="SPIN_USERS">Percent of spin users</label>
+                <input type="number" class="form-control" name="SPIN_USERS" id="SPIN_USERS" placeholder="2000" required value="{{ spin_user_percent*100 }}" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label for="REACT_LUCKY">Chance that spin user react on notification in percents</label>
+                <input type="number" class="form-control" name="REACT_LUCKY" id="REACT_LUCKY" placeholder="2000" required value="{{ react_on_notification_chance*100 }}" min="0" max="100">
+            </div>
+            <div class="form-group">
                 <label for="USER_DAYS_DELAY_BEFORE_USE_SPIN">User delay before use Spin</label>
                 <input type="number" class="form-control" name="USER_DAYS_DELAY_BEFORE_USE_SPIN" id="USER_DAYS_DELAY_BEFORE_USE_SPIN" required placeholder="1000" value="1000">
             </div>
@@ -32,27 +40,55 @@
                 {{ disease }}
                 </label>
             </div>
-            {% end %}
+            {% endfor %}
             <p>Unhealable disease:</p>
             {% for disease in diseases %}
             <div class="form-check" style="margin-left: 20px;">
                 <input class="form-check-input"
                 {% if disease in unhelable_diseases %}
                 checked
-                {% end %}
+                {% endif %}
                 name="UNHEALABLE_DISEASES[]" value="{{ disease }}" type="checkbox" id="UNHEALABLE_DISEASES_{{ disease }}">
                 <label class="form-check-label" for="UNHEALABLE_DISEASES_{{ disease }}">
                 {{ disease }}
                 </label>
             </div>
-            {% end %}
+            {% endfor %}
             <p>Disease prevalence percent:</p>
             {% for disease in diseases_prevalence %}
             <div class="form-group" style="margin-left: 20px;">
                 <label for="DISEASES_LIST_{{ disease }}">{{ disease }}</label>
-                <input type="number" class="form-control" name="DISEASES_LIST_{{ disease }}" id="DISEASES_LIST_{{ disease }}" required value="{{ diseases_prevalence[disease] * 100 }}" min="0" max="100">
+                <input step="0.01" type="number" class="form-control" name="DISEASES_LIST_{{ disease }}" id="DISEASES_LIST_{{ disease }}" required value="{{ diseases_prevalence[disease] * 100 }}" min="0" max="100">
             </div>
-            {% end %}
+            {% endfor %}
+            <p>Vaccination prevalence percent:</p>
+            {% for disease in diseases %}
+            <div class="form-group" style="margin-left: 20px;">
+                <label for="VACCINATION_{{ disease }}">{{ disease }}</label>
+                <input step="0.01" type="number" class="form-control" name="VACCINATION_{{ disease }}" id="VACCINATION_{{ disease }}" required value='{{ vaccination[disease]*100 if disease in vaccination else 0 }}' min="0" max="100">
+            </div>
+            {% endfor %}
+            <p>Disease transmission chance in percent:</p>
+            {% for disease in diseases %}
+            <div class="form-group" style="margin-left: 20px;">
+                <label for="DISEASES_LUCK_LIST_{{ disease }}">{{ disease }}</label>
+                <input step="0.01" type="number" class="form-control" name="DISEASES_LUCK_LIST_{{ disease }}" id="DISEASES_LUCK_LIST_{{ disease }}" required value='{{ disease_transmition_chance[disease] * 100 }}' min="0" max="100">
+            </div>
+            {% endfor %}
+            <p>Disease doctor heal chance in percent:</p>
+            {% for disease in diseases %}
+            <div class="form-group" style="margin-left: 20px;">
+                <label for="DISEASES_LUCK_HEAL_LIST_{{ disease }}">{{ disease }}</label>
+                <input step="0.01" type="number" class="form-control" name="DISEASES_LUCK_HEAL_LIST_{{ disease }}" id="DISEASES_LUCK_HEAL_LIST_{{ disease }}" required value='{{ disease_doctor_heal_chance[disease] * 100 }}' min="0" max="100">
+            </div>
+            {% endfor %}
+            <p>Disease self heal chance in percent:</p>
+            {% for disease in diseases %}
+            <div class="form-group" style="margin-left: 20px;">
+                <label for="DISEASES_DAILY_LUCK_HEAL_LIST_{{ disease }}">{{ disease }}</label>
+                <input step="0.01" type="number" class="form-control" name="DISEASES_DAILY_LUCK_HEAL_LIST_{{ disease }}" id="DISEASES_DAILY_LUCK_HEAL_LIST_{{ disease }}" required value='{{ disease_self_heal_chance[disease] * 100 }}' min="0" max="100">
+            </div>
+            {% endfor %}
           <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Submit</button>
         </form>
     </div>

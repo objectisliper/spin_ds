@@ -2,8 +2,11 @@ import time
 
 from app.managers import simulate_simple_connections, save_output_to_file
 from app.simulation_settings import TOTAL_INFECTED_PEOPLE_OUTPUT_FILE, PERCENT_OF_INFECTIONS_BY_DAY_OUTPUT_FILE
+from app.utils import set_environment, get_setting
 
 start_time = time.time()
+
+set_environment()
 
 list_to_print, simple_person_days_avg, spin_person_days_avg, count_of_visits, percent_of_useful_notifications, \
 percent_of_spin_users_that_have_notifications, infections_via_connection_percent, \

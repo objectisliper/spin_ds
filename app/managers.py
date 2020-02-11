@@ -6,10 +6,7 @@ from secrets import randbelow
 from statistics import mean
 
 from app.models import StandardPerson
-from app.settings import POPULATION, TIME_INTERVAL_DAYS, DISEASES_DETECT_LIST, \
-    USER_DAYS_DELAY_BEFORE_USE_SPIN, NEW_PEOPLE_DAY_LUCK, \
-    EXIT_PEOPLE_DAY_LUCK
-from app.utils import decision
+from app.utils import decision, get_setting
 
 
 def save_output_to_file(results: dict, file_name, is_keys_tuple=False):
@@ -24,7 +21,7 @@ def simulate_simple_connections_for_spin_influence_analytics(persons) -> dict:
 
     persons = copy.deepcopy(persons)
 
-    people_with_diseases_in_last_day = copy.deepcopy(DISEASES_DETECT_LIST)
+    people_with_diseases_in_last_day = copy.deepcopy(get_setting('DISEASES_DETECT_LIST'))
 
     simple_iterate_through_days(persons)
 
@@ -37,24 +34,24 @@ def simulate_simple_connections_for_spin_influence_analytics(persons) -> dict:
 
 
 def simulate_simple_connections() -> (dict, list, list, dict, float, float, list, float):
-    simple_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
+    simple_person_days_avg = copy.deepcopy(get_setting('DISEASES_DETECT_LIST'))
 
-    spin_person_days_avg = copy.deepcopy(DISEASES_DETECT_LIST)
+    spin_person_days_avg = copy.deepcopy(get_setting('DISEASES_DETECT_LIST'))
 
     count_of_doctor_visits = {'simple_user': [], 'spin_user': []}
 
     count_of_useful_doctor_visits = []
 
-    infections_via_connection_percent = {'simple_user': copy.deepcopy(DISEASES_DETECT_LIST),
-                                         'spin_user': copy.deepcopy(DISEASES_DETECT_LIST)}
+    infections_via_connection_percent = {'simple_user': copy.deepcopy(get_setting('DISEASES_DETECT_LIST')),
+                                         'spin_user': copy.deepcopy(get_setting('DISEASES_DETECT_LIST'))}
 
     percent_of_useful_notifications = []
 
     people_with_diseases_by_day = {}
 
-    persons = [StandardPerson() for i in range(POPULATION)]
+    persons = [StandardPerson() for i in range(get_setting('POPULATION'))]
 
-    for disease in DISEASES_DETECT_LIST:
+    for disease in get_setting('DISEASES_DETECT_LIST'):
         people_with_diseases_by_day[disease, 'SIMPLE USER'] = []
         people_with_diseases_by_day[disease, 'SPIN USER'] = []
         people_with_diseases_by_day[disease, 'ALL POPULATION'] = []
@@ -118,7 +115,7 @@ def get_days_avg_before_find_disease_for_one(person, simple_days_avg, spin_days_
 
 
 def simple_iterate_through_days(persons):
-    for i in range(TIME_INTERVAL_DAYS):
+    for i in range(get_setting('TIME_INTERVAL_DAYS')):
         try_to_connect_persons(i, persons)
         for person in persons:
             person.is_already_connected_today = False
@@ -132,16 +129,16 @@ def simple_iterate_through_days(persons):
 
 def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, spin_days_avg, count_of_doctor_visits,
                          percent_of_useful_notifications, infections_via_connection_percent):
-    for i in range(TIME_INTERVAL_DAYS):
+    for i in range(get_setting('TIME_INTERVAL_DAYS')):
         # persons = MultiprocSimulation(persons).process_population()
 
         try_to_connect_persons(i, persons)
 
         total_simple_connection_quantity = 0
-        total_simple_infection_via_connection_quantity = {k: 0 for k, v in copy.deepcopy(DISEASES_DETECT_LIST).items()}
+        total_simple_infection_via_connection_quantity = {k: 0 for k, v in copy.deepcopy(get_setting('DISEASES_DETECT_LIST')).items()}
 
         total_spin_connection_quantity = 0
-        total_spin_infection_via_connection_quantity = {k: 0 for k, v in copy.deepcopy(DISEASES_DETECT_LIST).items()}
+        total_spin_infection_via_connection_quantity = {k: 0 for k, v in copy.deepcopy(get_setting('DISEASES_DETECT_LIST')).items()}
 
         for person in persons:
             if person.is_already_connected_today:
@@ -164,7 +161,7 @@ def iterate_through_days(people_with_diseases_by_day, persons, simple_days_avg, 
             person.is_connected_with_spin_user = False
             person.is_connected_with_simple_user = False
 
-        for disease in DISEASES_DETECT_LIST:
+        for disease in get_setting('DISEASES_DETECT_LIST'):
             infections_via_connection_percent['simple_user'][disease].append(
                 (total_simple_infection_via_connection_quantity[disease] / total_simple_connection_quantity) * 100
                 if total_simple_connection_quantity != 0 else 0
@@ -186,7 +183,7 @@ def try_to_connect_persons(day, persons):
     for person in persons:
         people_to_connect = get_people_to_connect(person, persons)
 
-        person.live_a_day(people_to_connect, day > USER_DAYS_DELAY_BEFORE_USE_SPIN, day % 365)
+        person.live_a_day(people_to_connect, day > get_setting('USER_DAYS_DELAY_BEFORE_USE_SPIN'), day % 365)
 
 
 def get_people_to_connect(person, persons):
@@ -217,22 +214,22 @@ def calculate_avg(dict_of_values_to_calculate_avg):
 
 def simple_simulate_population_change(persons):
     persons_len = len(persons)
-    for i in range(int(randint(*EXIT_PEOPLE_DAY_LUCK) / 1000 * persons_len)):
+    for i in range(int(randint(*get_setting('EXIT_PEOPLE_DAY_LUCK')) / 1000 * persons_len)):
         persons.pop(randbelow(len(persons)))
-    for i in range(int(randint(*NEW_PEOPLE_DAY_LUCK) / 1000 * persons_len)):
+    for i in range(int(randint(*get_setting('NEW_PEOPLE_DAY_LUCK')) / 1000 * persons_len)):
         persons.append(StandardPerson())
 
 
 def simulate_population_change(persons, simple_days_avg, spin_days_avg, count_of_doctor_visits,
                                percent_of_useful_notifications):
     persons_len = len(persons)
-    for i in range(int(randint(*EXIT_PEOPLE_DAY_LUCK) / 1000 * persons_len)):
+    for i in range(int(randint(*get_setting('EXIT_PEOPLE_DAY_LUCK')) / 1000 * persons_len)):
         person_that_exit = persons.pop(randbelow(len(persons)))
         get_count_of_doctor_visits_for_one(person_that_exit, count_of_doctor_visits)
         get_days_avg_before_find_disease_for_one(person_that_exit, simple_days_avg, spin_days_avg)
         if person_that_exit.is_spin_user and person_that_exit.is_already_have_notifications():
             percent_of_useful_notifications.append(person_that_exit.get_percent_of_useful_notifications())
-    for i in range(int(randint(*NEW_PEOPLE_DAY_LUCK) / 1000 * persons_len)):
+    for i in range(int(randint(*get_setting('NEW_PEOPLE_DAY_LUCK')) / 1000 * persons_len)):
         persons.append(StandardPerson())
 
 
@@ -243,7 +240,7 @@ def get_disease_day_data(people_with_diseases_by_day, persons, day):
         print(len(spin_users))
     for disease, disease_group in people_with_diseases_by_day:
         if disease_group == 'SPIN USER':
-            if day > USER_DAYS_DELAY_BEFORE_USE_SPIN:
+            if day > get_setting('USER_DAYS_DELAY_BEFORE_USE_SPIN'):
                 people_with_diseases_by_day[disease, disease_group].append(
                     len([spin_user.diseases for spin_user in spin_users if disease in spin_user.diseases]) / len(
                         spin_users) * 100

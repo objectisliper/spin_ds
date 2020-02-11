@@ -1,9 +1,7 @@
-import os
-
 DISEASES_LIST = {'Chlamydia': 0.03, "HPV": 0.426,
                  'HSV-2': 0.1205}
 
-POPULATION = 300000
+POPULATION = 10000
 
 TIME_INTERVAL_DAYS = 6000
 
@@ -21,7 +19,7 @@ UNHEALABLE_DISEASES = ['HSV-2']
 
 VACCINATION = {'HPV': 0.215}
 
-os.environ['SPIN_USERS'] = str(0.1)
+SPIN_USERS = 0.1
 
 REACT_LUCKY = 0.9
 

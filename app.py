@@ -1,15 +1,24 @@
-import tornado.ioloop
-import tornado.web
+import aiohttp_jinja2
+import jinja2
+from aiohttp import web
 
-from app.settings import PORT, TORNADO_SETTINGS
+from app.settings import PORT, STATIC_FOLDER
 from app.urls import url_list
+from app.utils import set_environment
 
 
 def make_app():
-    return tornado.web.Application(url_list, **TORNADO_SETTINGS)
+    set_environment()
+    app = web.Application()
+
+    app.router.add_routes(url_list)
+
+    aiohttp_jinja2.setup(app,
+                         loader=jinja2.FileSystemLoader(STATIC_FOLDER))
+
+    return app
 
 
 if __name__ == "__main__":
     app = make_app()
-    app.listen(PORT)
-    tornado.ioloop.IOLoop.current().start()
+    web.run_app(app, host="127.0.0.1", port=PORT)
