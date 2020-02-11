@@ -36,6 +36,11 @@ class MainView(web.View):
                 'is_live_render': False}
 
 
+class JsForNone(web.View):
+    async def get(self):
+        return web.Response(text='kek')
+
+
 @aiohttp_jinja2.template('set_up_simulation_template.html')
 class SetUpSimulationView(web.View):
     async def get(self):
