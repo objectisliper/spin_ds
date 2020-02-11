@@ -32,7 +32,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.live:
-        print('test')
-        # web.run_app(app, path=args.path, port=args.port)
+        web.run_app(app, path=args.path, port=args.port)
     else:
         web.run_app(app, host="127.0.0.1", port=PORT)
