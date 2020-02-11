@@ -1,3 +1,5 @@
+import argparse
+
 import aiohttp_jinja2
 import jinja2
 from aiohttp import web
@@ -5,6 +7,12 @@ from aiohttp import web
 from app.settings import PORT, STATIC_FOLDER
 from app.urls import url_list
 from app.utils import set_environment
+
+
+parser = argparse.ArgumentParser(description="aiohttp server example")
+parser.add_argument('--path')
+parser.add_argument('--port')
+parser.add_argument('--live')
 
 
 def make_app():
@@ -21,4 +29,9 @@ def make_app():
 
 if __name__ == "__main__":
     app = make_app()
-    web.run_app(app, host="127.0.0.1", port=PORT)
+    args = parser.parse_args()
+
+    if args.live:
+        web.run_app(app, path=args.path, port=args.port)
+    else:
+        web.run_app(app, host="127.0.0.1", port=PORT)
